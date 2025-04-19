@@ -175,10 +175,37 @@ const reorderVideos = async (req: Request, res: Response) => {
   });
 };
 
+const getMyCourses = async (req: Request, res: Response) => {
+  // Get tutor ID from authenticated user
+  const tutorId = req.user._id;
+
+  // Find courses where tutor matches, with basic video info
+  const courses = await CourseModel.find(
+    { tutor: tutorId },
+    {
+      title: 1,
+      description: 1,
+      thumbnail: 1,
+      createdAt: 1,
+      "videos._id": 1,
+      "videos.title": 1,
+      "videos.order": 1,
+      "videos.createdAt": 1,
+    }
+  ).sort({ createdAt: -1 });
+
+  res.status(200).json({
+    success: true,
+    count: courses.length,
+    courses,
+  });
+};
+
 export {
   addVideo,
   createCourse,
   updateCourseMetadata,
   updateVideo,
   reorderVideos,
+  getMyCourses,
 };
