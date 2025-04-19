@@ -443,6 +443,7 @@ const CourseManagement = () => {
 
 const DropImage = () => {
     const [image, setImage] = useState(null)
+    const [imageName, setImageName] = useState("")
     const [imageUploaded, setImageUploaded] = useState(false)
     const fileInputRef = useRef(null)
 
@@ -457,6 +458,7 @@ const DropImage = () => {
             localStorage.setItem("uploadedImage", base64data)
         }
         reader.readAsDataURL(file)
+        setImageName(file.name)
         setImageUploaded(true)
 
         toast.success("Image uploaded successfully", {
@@ -487,6 +489,7 @@ const DropImage = () => {
             localStorage.setItem("uploadedImage", base64data)
         }
         reader.readAsDataURL(file)
+        setImageName(file.name)
         setImageUploaded(true)
     }
 
@@ -496,6 +499,7 @@ const DropImage = () => {
 
     const removeImage = () => {
         setImage(null)
+        setImageName("")
         localStorage.removeItem("uploadedImage")
     }
 
@@ -518,8 +522,8 @@ const DropImage = () => {
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             />
 
-            {imageUploaded ? (
-                <img src={image} alt="Preview" className="max-h-full object-contain" />
+            {imageUploaded && imageName ? (
+                <span className="text-sm">Image Chosen: {imageName}</span>
             ) : (
                 <span className="text-sm">Drag & drop or click to upload image</span>
             )}
