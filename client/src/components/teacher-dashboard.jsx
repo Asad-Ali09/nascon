@@ -433,11 +433,11 @@ const CourseManagement = () => {
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                             <Plus className="h-6 w-6 text-muted-foreground" />
                         </div>
-                        <h3 className="mt-4 text-lg font-medium">Create New Course</h3>
+                        <h3 className="mt-1 text-lg font-medium">Create New Course</h3>
                         <p className="mt-2 text-center text-sm text-muted-foreground">
                             Add a new course to your teaching portfolio
                         </p>
-                        <Button className="mt-4" variant="outline">
+                        <Button className="mt-0" variant="outline">
                             Get Started
                         </Button>
                     </Card>
