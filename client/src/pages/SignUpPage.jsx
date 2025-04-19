@@ -4,16 +4,16 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { z } from 'zod';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
+
 import { FiMail, FiLock, FiUserPlus } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
-import { signUpUser, setVerificationEmail } from '@/Redux/slices/authSlice';
+import { signUpUser } from '@/Redux/slices/authSlice';
 import { signUpFormSchema } from '@/zod/index';
 
 const SignUpForm = ({ type }) => {
@@ -27,15 +27,22 @@ const SignUpForm = ({ type }) => {
             email: '',
             password: '',
             confirmPassword: '',
+            username: '', // Add username default value
         },
     });
+
 
     const onSubmit = async (data) => {
         try {
             await dispatch(signUpUser({ ...data, userType: type })).unwrap();
-            dispatch(setVerificationEmail(data.email));
-            toast.success('Account created! Please verify your email');
-            navigate('/verify-mfa');
+            toast.success('Account created!');
+            if (type === 'student') {
+                // INFO: navigte to student login AFTERT TYHIS 
+                navigate('/home');
+            } else if (type === 'tutor') {
+                navigate('/admin');
+            }
+            navigate('/');
         } catch (error) {
             toast.error(error);
         }
@@ -56,6 +63,24 @@ const SignUpForm = ({ type }) => {
                                         <FiMail className="h-4 w-4 text-gray-400" />
                                     </div>
                                     <Input placeholder="name@example.com" {...field} className="pl-10" />
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Username</FormLabel>
+                            <FormControl>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <FiUserPlus className="h-4 w-4 text-gray-400" />
+                                    </div>
+                                    <Input placeholder="Enter your username" {...field} className="pl-10" />
                                 </div>
                             </FormControl>
                             <FormMessage />

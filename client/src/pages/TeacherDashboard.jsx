@@ -1,10 +1,9 @@
-"use client"
-
 import { useState, memo, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
+import { useNavigate } from "react-router-dom"
+import { useDispatch, useSelector } from "react-redux"
 import {
     BarChart3,
-    Book,
     BookOpen,
     Calendar,
     FileVideo,
@@ -13,7 +12,6 @@ import {
     MessageSquare,
     Plus,
     Settings,
-    Trash2,
     Users,
 } from "lucide-react"
 import {
@@ -56,11 +54,127 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress"
+import { toast } from "sonner"
+import { checkAuthStatus, logoutUser } from "@/Redux/slices/authSlice"
+import { createCourse, fetchCourses } from "@/Redux/slices/courseSlice"
 
 const TeacherDashboard = () => {
     const [activeTab, setActiveTab] = useState("overview")
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [option, setOption] = useState("overview");
+    const [isCreateCourseOpen, setIsCreateCourseOpen] = useState(false);
+    const [courseFormData, setCourseFormData] = useState({
+        title: "",
+        description: "",
+        thumbnail: "",
+        thumbnailFile: null
+    });
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { user, loading: authLoading } = useSelector((state) => state.auth);
+    const { courses, loading: coursesLoading } = useSelector((state) => state.course);
+
+    // Check authentication and role
+    useEffect(() => {
+        if (!user) {
+
+            try {
+                const resultAction = dispatch(checkAuthStatus());
+
+                // Check if the action type is the fulfilled type
+                if (resultAction.type === checkAuthStatus.fulfilled.type) {
+                    // Authentication successful, user should be in the store now
+                } else {
+
+                    // Authentication failed
+                    // navigate("/login");
+                }
+            } catch (error) {
+                console.error("Auth verification error:", error);
+                navigate("/login");
+            }
+        }
+    }, [user, authLoading, navigate, dispatch]);
+
+    // Fetch courses when component mounts
+    useEffect(() => {
+        if (user && user.role === "tutor") {
+            dispatch(fetchCourses());
+        }
+    }, [dispatch, user]);
+
+    const handleLogout = async () => {
+        try {
+            await dispatch(logoutUser()).unwrap();
+            navigate("/login");
+        } catch (error) {
+            toast.error("Failed to logout");
+        }
+    };
+
+    const handleCreateCourse = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
+        // Validate required fields
+        if (!courseFormData.title || !courseFormData.description || !courseFormData.thumbnailFile) {
+            toast.error("All fields are required, including the thumbnail image");
+            setIsSubmitting(false);
+            return;
+        }
+
+        try {
+            await dispatch(createCourse({
+                title: courseFormData.title,
+                description: courseFormData.description,
+                thumbnailFile: courseFormData.thumbnailFile
+            })).unwrap();
+
+            toast.success("Course created successfully!");
+            setIsCreateCourseOpen(false);
+            setCourseFormData({
+                title: "",
+                description: "",
+                thumbnail: "",
+                thumbnailFile: null
+            });
+        } catch (error) {
+            toast.error(error || "Failed to create course");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    ;
+
+
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setCourseFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+    const handleImageUpload = (base64Image, file) => {
+        setCourseFormData(prev => ({
+            ...prev,
+            thumbnail: base64Image,
+            thumbnailFile: file
+        }));
+    };
+
+
+
+    if (authLoading) {
+        return <div className="flex h-screen items-center justify-center">Loading...</div>;
+    }
+
+    if (!user || user.role !== "tutor") {
+        return null; // Will redirect in useEffect
+    }
 
     return (
         <SidebarProvider>
@@ -75,8 +189,8 @@ const TeacherDashboard = () => {
                                 <DropdownMenu>
                                     <DropdownMenuTrigger className='hover:cursor-pointer'>
                                         <Avatar>
-                                            <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Professor Chad" />
-                                            <AvatarFallback>PC</AvatarFallback>
+                                            <AvatarImage src="/placeholder.svg?height=40&width=40" alt={user?.name || "User"} />
+                                            <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
                                         </Avatar>
                                     </DropdownMenuTrigger>
 
@@ -86,7 +200,7 @@ const TeacherDashboard = () => {
                                         <DropdownMenuItem className='hover:cursor-pointer'>Profile</DropdownMenuItem>
                                         <DropdownMenuItem className='hover:cursor-pointer'>Billing</DropdownMenuItem>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem className='hover:cursor-pointer'>Logout</DropdownMenuItem>
+                                        <DropdownMenuItem className='hover:cursor-pointer' onClick={handleLogout}>Logout</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
@@ -98,7 +212,18 @@ const TeacherDashboard = () => {
                             <DashboardOverview />
                         )}
                         {option === "courses" && (
-                            <CourseManagement />
+                            <CourseManagement
+                                courses={courses}
+                                loading={coursesLoading}
+                                isCreateCourseOpen={isCreateCourseOpen}
+                                setIsCreateCourseOpen={setIsCreateCourseOpen}
+                                courseFormData={courseFormData}
+                                setCourseFormData={setCourseFormData}
+                                handleCreateCourse={handleCreateCourse}
+                                handleInputChange={handleInputChange}
+                                handleImageUpload={handleImageUpload}
+                                isSubmitting={isSubmitting}
+                            />
                         )}
 
                         {option === "videos" && (
@@ -210,7 +335,7 @@ const DashboardOverview = () => {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
                     title="Total Students"
-                    value="1248"
+                    value="1,248"
                     icon={<Users className="h-4 w-4 text-muted-foreground" />}
                 />
                 <StatsCard
@@ -219,13 +344,8 @@ const DashboardOverview = () => {
                     icon={<BookOpen className="h-4 w-4 text-muted-foreground" />}
                 />
                 <StatsCard
-                    title="Total Courses"
-                    value="132"
-                    icon={<Book className="h-4 w-4 text-muted-foreground" />}
-                />
-                <StatsCard
-                    title="Total Videos"
-                    value="928"
+                    title="Video Content"
+                    value="64 hrs"
                     icon={<FileVideo className="h-4 w-4 text-muted-foreground" />}
                 />
             </div>
@@ -264,8 +384,8 @@ const DashboardOverview = () => {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Course Averages</CardTitle>
-                        <CardDescription>Passing metrics for your recent courses</CardDescription>
+                        <CardTitle>Course Performance</CardTitle>
+                        <CardDescription>Engagement metrics for your top courses</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
@@ -319,11 +439,18 @@ const StatsCard = ({ title, value, description, icon }) => {
     )
 }
 
-const CourseManagement = () => {
-    const courses = [
-        { id: 1, title: "Advanced Physics", students: 342, videos: 24, status: "active" },
-    ]
-
+const CourseManagement = ({
+    courses,
+    loading,
+    isCreateCourseOpen,
+    setIsCreateCourseOpen,
+    courseFormData,
+    setCourseFormData,
+    handleCreateCourse,
+    handleInputChange,
+    handleImageUpload,
+    isSubmitting
+}) => {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -333,12 +460,13 @@ const CourseManagement = () => {
         >
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Your Courses</h2>
-                <Dialog>
-                    <DialogTrigger>
+                <Dialog open={isCreateCourseOpen} onOpenChange={setIsCreateCourseOpen}>
+                    <DialogTrigger asChild>
                         <Button className='cursor-pointer' variant="outline">
                             <Plus className="mr-2 h-4 w-4" />
                             Create New Course
-                        </Button></DialogTrigger>
+                        </Button>
+                    </DialogTrigger>
                     <DialogContent className="sm:max-w-[500px]">
                         <DialogHeader>
                             <DialogTitle>Create New Course</DialogTitle>
@@ -347,16 +475,20 @@ const CourseManagement = () => {
                             </DialogDescription>
                         </DialogHeader>
 
-                        <form className="space-y-4">
+                        <form className="space-y-4" onSubmit={handleCreateCourse}>
                             <div className="space-y-1">
                                 <label className="text-sm font-medium text-foreground" htmlFor="title">
                                     Course Title
                                 </label>
                                 <input
                                     id="title"
+                                    name="title"
                                     type="text"
+                                    value={courseFormData.title}
+                                    onChange={handleInputChange}
                                     placeholder="e.g. Introduction to Web Development"
                                     className="w-full rounded-lg border border-muted bg-background px-3 py-2 text-sm shadow-sm transition focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                    required
                                 />
                             </div>
 
@@ -364,7 +496,7 @@ const CourseManagement = () => {
                                 <label className="text-sm font-medium text-foreground">
                                     Thumbnail Image
                                 </label>
-                                <DropImage />
+                                <DropImage onImageUpload={handleImageUpload} />
                             </div>
 
                             <div className="space-y-1">
@@ -373,15 +505,19 @@ const CourseManagement = () => {
                                 </label>
                                 <textarea
                                     id="description"
+                                    name="description"
                                     rows={4}
+                                    value={courseFormData.description}
+                                    onChange={handleInputChange}
                                     placeholder="Write a short description of your course..."
                                     className="w-full rounded-lg border border-muted bg-background px-3 py-2 text-sm shadow-sm transition focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                                    required
                                 ></textarea>
                             </div>
 
                             <div className="flex justify-end">
-                                <Button type="submit" className="mt-2">
-                                    Submit
+                                <Button type="submit" className="mt-2" disabled={isSubmitting}>
+                                    {isSubmitting ? "Creating..." : "Create Course"}
                                 </Button>
                             </div>
                         </form>
@@ -389,92 +525,96 @@ const CourseManagement = () => {
                 </Dialog>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {courses.map((course) => (
-                    <motion.div key={course.id} whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
+            {loading ? (
+                <div className="flex h-40 items-center justify-center">
+                    <p>Loading courses...</p>
+                </div>
+            ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {courses && courses.length > 0 ? (
+                        courses.map((course) => (
+                            <motion.div key={course._id} whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
+                                <Card>
+                                    <CardHeader className="pb-2">
+                                        <img src={course.thumbnail} alt="Course Thumbnail" className="h-32 w-full mb-4 rounded-t-lg object-cover" />
+                                        <div className="flex items-center justify-between">
+                                            <CardTitle>{course.title}</CardTitle>
+                                            <Badge variant="default">
+                                                Active
+                                            </Badge>
+                                        </div>
+                                        <CardDescription>{course.enrollments?.length || 0} students enrolled</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <div className="flex items-center">
+                                                <FileVideo className="mr-1 h-4 w-4 text-muted-foreground" />
+                                                <span>{course.videos?.length || 0} videos</span>
+                                            </div>
+                                            <div className="flex items-center">
+                                                <Users className="mr-1 h-4 w-4 text-muted-foreground" />
+                                                <span>{course.enrollments?.length || 0} students</span>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                    <CardFooter className="flex gap-2">
+                                        <Button variant="outline" className="flex-1">
+                                            Edit
+                                        </Button>
+                                        <Button className="flex-1">Manage</Button>
+                                    </CardFooter>
+                                </Card>
+                            </motion.div>
+                        ))
+                    ) : (
+                        <div className="col-span-full text-center py-10">
+                            <p className="text-muted-foreground">You haven't created any courses yet.</p>
+                        </div>
+                    )}
 
-                        <Card className={'pt-0 pb-6'}>
-                            <CardHeader className="pb-0 px-0">
-                                <img src="https://avatars.githubusercontent.com/u/118683092?v=4" alt="Course Thumbnail" className="h-32 w-full mb-4 rounded-t-lg object-cover" />
-                                <div className="flex items-center justify-between px-6">
-                                    <CardTitle>{course.title}</CardTitle>
-                                    <Badge variant={course.status === "active" ? "default" : "secondary"}>
-                                        {course.status === "active" ? "Active" : "Draft"}
-                                    </Badge>
-                                </div>
-                                <CardDescription className={'px-6'}>{course.students} students enrolled</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-
-
-                                <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center">
-                                        <FileVideo className="mr-1 h-4 w-4 text-muted-foreground" />
-                                        <span>{course.videos} videos</span>
-                                    </div>
-                                    <div className="flex items-center">
-                                        <Users className="mr-1 h-4 w-4 text-muted-foreground" />
-                                        <span>{course.students} students</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                            <CardFooter className="flex gap-2">
-                                <Button variant="outline" className="flex-1">
-                                    Edit
-                                </Button>
-                                <Button className="flex-1">Manage</Button>
-                            </CardFooter>
+                    <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }}>
+                        <Card
+                            className="flex h-full flex-col items-center justify-center border-dashed p-6 cursor-pointer"
+                            onClick={() => setIsCreateCourseOpen(true)}
+                        >
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                                <Plus className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                            <h3 className="mt-4 text-lg font-medium">Create New Course</h3>
+                            <p className="mt-2 text-center text-sm text-muted-foreground">
+                                Add a new course to your teaching portfolio
+                            </p>
+                            <Button className="mt-4" variant="outline">
+                                Get Started
+                            </Button>
                         </Card>
                     </motion.div>
-                ))}
-
-                <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }}>
-                    <Card className="flex h-full flex-col items-center justify-center border-dashed p-6">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                            <Plus className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                        <h3 className="mt-1 text-lg font-medium">Create New Course</h3>
-                        <p className="mt-2 text-center text-sm text-muted-foreground">
-                            Add a new course to your teaching portfolio
-                        </p>
-                        <Button className="mt-0" variant="outline">
-                            Get Started
-                        </Button>
-                    </Card>
-                </motion.div>
-            </div>
+                </div>
+            )}
         </motion.div>
     )
 }
 
-const DropImage = () => {
+const DropImage = ({ onImageUpload }) => {
     const [image, setImage] = useState(null)
-    const [imageName, setImageName] = useState("")
     const [imageUploaded, setImageUploaded] = useState(false)
     const fileInputRef = useRef(null)
-
+    const [file, setFile] = useState(null);
     const handleImageUpload = (e) => {
-        const file = e.target.files[0]
-        if (!file || !file.type.startsWith("image/")) return
+        const file = e.target.files[0];
+        if (!file || !file.type.startsWith("image/")) return;
 
-        const reader = new FileReader()
+        setFile(file); // Store the file object
+
+        const reader = new FileReader();
         reader.onloadend = () => {
-            const base64data = reader.result
-            setImage(base64data)
-            localStorage.setItem("uploadedImage", base64data)
-        }
-        reader.readAsDataURL(file)
-        setImageName(file.name)
-        setImageUploaded(true)
-
-        toast.success("Image uploaded successfully", {
-            action: {
-                text: "Close",
-                onClick: () => toast.dismiss()
-            }
-        })
-    }
-
+            const base64data = reader.result;
+            setImage(base64data);
+            onImageUpload(base64data, file);
+        };
+        reader.readAsDataURL(file);
+        setImageUploaded(true);
+    };
     const handleDrop = (e) => {
         e.preventDefault()
         const file = e.dataTransfer.files[0]
@@ -492,10 +632,9 @@ const DropImage = () => {
         reader.onloadend = () => {
             const base64data = reader.result
             setImage(base64data)
-            localStorage.setItem("uploadedImage", base64data)
+            onImageUpload(base64data)
         }
         reader.readAsDataURL(file)
-        setImageName(file.name)
         setImageUploaded(true)
     }
 
@@ -505,8 +644,7 @@ const DropImage = () => {
 
     const removeImage = () => {
         setImage(null)
-        setImageName("")
-        localStorage.removeItem("uploadedImage")
+        setImageUploaded(false)
     }
 
     useEffect(() => {
@@ -528,20 +666,8 @@ const DropImage = () => {
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             />
 
-            {imageUploaded && image ? (
-                <div className="flex flex-col items-center">
-                    <img
-                        src={image}
-                        alt="Uploaded Preview"
-                        className="h-24 w-24 object-cover rounded-md"
-                    />
-                    <button
-                        onClick={removeImage}
-                        className="mt-2 text-sm text-red-500 hover:underline"
-                    >
-                        Remove
-                    </button>
-                </div>
+            {imageUploaded ? (
+                <img src={image} alt="Preview" className="max-h-full object-contain" />
             ) : (
                 <span className="text-sm">Drag & drop or click to upload image</span>
             )}
@@ -551,8 +677,24 @@ const DropImage = () => {
 
 const VideoManagement = () => {
     const videos = [
-        { id: 1, title: "Wave-Particle Duality", duration: "38:45", course: "Advanced Physics", status: "transcribed" },
-        { id: 2, title: "Chemical Bonding", duration: "36:29", course: "Introduction to Chemistry", status: "processing" },
+        {
+            id: 1,
+            title: "Introduction to Quantum Mechanics",
+            duration: "42:18",
+            course: "Advanced Physics",
+            status: "transcribed",
+        },
+        { id: 2, title: "Wave-Particle Duality", duration: "38:45", course: "Advanced Physics", status: "transcribed" },
+        { id: 3, title: "Atomic Structure", duration: "45:12", course: "Introduction to Chemistry", status: "transcribed" },
+        { id: 4, title: "Chemical Bonding", duration: "36:29", course: "Introduction to Chemistry", status: "processing" },
+        { id: 5, title: "Calculus Fundamentals", duration: "52:07", course: "Mathematics 101", status: "transcribed" },
+        {
+            id: 6,
+            title: "Cell Structure and Function",
+            duration: "48:33",
+            course: "Biology Fundamentals",
+            status: "processing",
+        },
     ]
 
     return (
@@ -564,7 +706,7 @@ const VideoManagement = () => {
         >
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Video Content</h2>
-                <Button variant="outline">
+                <Button>
                     <Plus className="mr-2 h-4 w-4" />
                     Upload New Video
                 </Button>
@@ -602,17 +744,13 @@ const VideoManagement = () => {
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <Badge variant={video.status === "transcribed" ? "default" : "secondary"}>
-                                        {video.status === 'transcribed' && "Transcribed"}
-                                        {video.status === 'processing' && "Processing"}
+                                        {video.status === "transcribed" ? "Transcribed" : "Processing"}
                                     </Badge>
                                     <Button variant="outline" size="sm">
                                         Edit
                                     </Button>
                                     <Button variant="outline" size="sm">
                                         View
-                                    </Button>
-                                    <Button variant="outline">
-                                        <Trash2 className="text-red-400" />
                                     </Button>
                                 </div>
                             </motion.div>
@@ -640,7 +778,7 @@ const VideoManagement = () => {
                             </div>
                             <Progress value={66.67} className="mt-2 h-2" />
                             <p className="mt-2 text-sm text-muted-foreground">
-                                2/4 videos have been successfully transcribed. 2 videos are still being processed.
+                                4 videos have been successfully transcribed. 2 videos are still being processed.
                             </p>
                         </div>
 
@@ -650,7 +788,7 @@ const VideoManagement = () => {
                                     <div className="h-2 w-2 rounded-full bg-green-500"></div>
                                     <h3 className="font-medium">Completed</h3>
                                 </div>
-                                <p className="mt-2 text-2xl font-bold">2</p>
+                                <p className="mt-2 text-2xl font-bold">4</p>
                                 <p className="text-sm text-muted-foreground">Videos with transcripts</p>
                             </div>
 

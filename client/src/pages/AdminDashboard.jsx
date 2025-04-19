@@ -1,7 +1,8 @@
 // client/src/pages/AdminDashboard.jsx
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+// import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import {
     Card,
@@ -22,11 +23,23 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const AdminDashboard = () => {
     const user = useSelector((state) => state.auth.user);
+    const authLoading = useSelector((state) => state.auth.loading);
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
 
-    // Uncomment for production
-    // if (!user || !user.isAdmin) {
-    //   return <Navigate to="/login" replace />;
-    // }
+    // Check authentication and role
+    useEffect(() => {
+        if (!authLoading && !user) {
+            navigate("/login");
+        } else if (user && user.role !== "admin") {
+            navigate("/home");
+            toast.error("Access denied. Only administrators can access this dashboard.");
+        }
+    }, [user, authLoading, navigate]);
+
+    if (!user || user.role !== "admin") {
+        return null; // Will redirect in useEffect
+    }
 
     // Animation variants
     const container = {

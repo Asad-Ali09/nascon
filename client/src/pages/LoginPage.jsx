@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginFormSchema } from '@/zod';
-import { loginUser, setVerificationEmail } from '@/Redux/slices/authSlice';
+import { loginUser } from '@/Redux/slices/authSlice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,11 +29,22 @@ const LoginPage = () => {
 
     const onSubmit = async (data) => {
         try {
-            const result = await dispatch(loginUser(data)).unwrap();
-            dispatch(setVerificationEmail(data.email));
-            navigate('/verify');
+            const resultAction = await dispatch(loginUser(data));
+            if (loginUser.fulfilled.match(resultAction)) {
+                const user = resultAction.payload;
+                // Navigate based on user role
+                if (user.role === 'teacher') {
+                    navigate("/teacher");
+                } else if (user.role === 'admin') {
+                    navigate("/admin");
+                } else {
+                    navigate("/home");
+                }
+            } else {
+                toast.error(resultAction.payload || "Login failed");
+            }
         } catch (error) {
-            toast.error(error);
+            toast.error("An unexpected error occurred");
         }
     };
 
@@ -147,7 +158,7 @@ const LoginPage = () => {
                                         <p className="text-sm text-gray-600 dark:text-gray-400">
                                             Don't have an account?{' '}
                                             <Link
-                                                to="/register"
+                                                to="/signup"
                                                 className="font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                                             >
                                                 Create one
