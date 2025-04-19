@@ -191,6 +191,7 @@ const getMyCourses = async (req: Request, res: Response) => {
       "videos.title": 1,
       "videos.url": 1,
       "videos.order": 1,
+      "videos.transcript": 1,
       "videos.createdAt": 1,
     }
   ).sort({ createdAt: -1 });
