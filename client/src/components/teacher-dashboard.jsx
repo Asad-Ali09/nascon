@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
+import { memo } from "react"
 import {
     BarChart3,
     BookOpen,
@@ -14,6 +15,14 @@ import {
     Settings,
     Users,
 } from "lucide-react"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 import {
     Sidebar,
@@ -40,14 +49,16 @@ import { Progress } from "@/components/ui/progress"
 
 const TeacherDashboard = () => {
     const [activeTab, setActiveTab] = useState("overview")
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [option, setOption] = useState("overview");
 
     return (
         <SidebarProvider>
             <div className="flex h-screen bg-background w-[100vw]">
-                <TeacherSidebar />
+                <TeacherSidebar isOpen={sidebarOpen} setOption={setOption} />
                 <SidebarInset className="flex-1 overflow-auto">
-                    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
-                        <SidebarTrigger />
+                    <header className="sticky top-0 z-10 flex min-h-[7vh] items-center gap-4 border-b bg-background px-6">
+                        <SidebarTrigger onClick={() => setSidebarOpen(prev => !prev)} />
                         <div className="flex flex-1 items-center justify-between">
                             <h1 className="text-xl font-semibold">Teacher Dashboard</h1>
                             <div className="flex items-center gap-4">
@@ -55,44 +66,46 @@ const TeacherDashboard = () => {
                                     <Calendar className="mr-2 h-4 w-4" />
                                     April 19, 2025
                                 </Button>
-                                <Avatar>
-                                    <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Professor Chad" />
-                                    <AvatarFallback>PC</AvatarFallback>
-                                </Avatar>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger className='hover:cursor-pointer'>
+                                        <Avatar>
+                                            <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Professor Chad" />
+                                            <AvatarFallback>PC</AvatarFallback>
+                                        </Avatar>
+                                    </DropdownMenuTrigger>
+
+                                    <DropdownMenuContent align="end" forceMount>
+                                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className='hover:cursor-pointer'>Profile</DropdownMenuItem>
+                                        <DropdownMenuItem className='hover:cursor-pointer'>Billing</DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className='hover:cursor-pointer'>Logout</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                         </div>
                     </header>
 
                     <main className="flex-1 p-6">
-                        <Tabs defaultValue="overview" className="space-y-4" onValueChange={setActiveTab}>
-                            <TabsList>
-                                <TabsTrigger value="overview">Overview</TabsTrigger>
-                                <TabsTrigger value="courses">Courses</TabsTrigger>
-                                <TabsTrigger value="videos">Videos</TabsTrigger>
-                                <TabsTrigger value="students">Students</TabsTrigger>
-                                <TabsTrigger value="chat">Chat</TabsTrigger>
-                            </TabsList>
+                        {option === "overview" && (
+                            <DashboardOverview />
+                        )}
+                        {option === "courses" && (
+                            <CourseManagement />
+                        )}
 
-                            <TabsContent value="overview" className="space-y-4">
-                                <DashboardOverview />
-                            </TabsContent>
+                        {option === "videos" && (
+                            <VideoManagement />
+                        )}
 
-                            <TabsContent value="courses" className="space-y-4">
-                                <CourseManagement />
-                            </TabsContent>
+                        {option === "students" && (
+                            <StudentManagement />
+                        )}
 
-                            <TabsContent value="videos" className="space-y-4">
-                                <VideoManagement />
-                            </TabsContent>
-
-                            <TabsContent value="students" className="space-y-4">
-                                <StudentManagement />
-                            </TabsContent>
-
-                            <TabsContent value="chat" className="space-y-4">
-                                <ChatInterface />
-                            </TabsContent>
-                        </Tabs>
+                        {option === "chat" && (
+                            <ChatInterface />
+                        )}
                     </main>
                 </SidebarInset>
             </div>
@@ -100,18 +113,21 @@ const TeacherDashboard = () => {
     )
 }
 
-const TeacherSidebar = () => {
+const TeacherSidebar = memo(({ isOpen, setOption }) => {
     return (
         <Sidebar variant="inset" collapsible="icon">
             <SidebarHeader className="border-b">
-                <div className="flex items-center gap-2 px-4 py-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
+                <div className={`flex items-center gap-2 py-2 transition-all duration-300 ease-in-out ${isOpen ? 'px-4' : 'px-0'
+                    }`}>
+                    <div className={`flex h-8 w-8 items-center justify-center ${isOpen ? 'rounded-md' : 'rounded-full'} bg-primary`}>
                         <GraduationCap className="h-4 w-4 text-primary-foreground" />
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-sm font-bold">EduPlatform</span>
-                        <span className="text-xs text-muted-foreground">Teacher Portal</span>
-                    </div>
+                    {isOpen === true && (
+                        <div className="flex flex-col">
+                            <span className="text-sm font-bold">EduPlatform</span>
+                            <span className="text-xs text-muted-foreground">Teacher Portal</span>
+                        </div>
+                    )}
                 </div>
             </SidebarHeader>
 
@@ -121,19 +137,19 @@ const TeacherSidebar = () => {
                     <SidebarGroupContent>
                         <SidebarMenu>
                             <SidebarMenuItem>
-                                <SidebarMenuButton tooltip="Dashboard">
+                                <SidebarMenuButton tooltip="Dashboard" onClick={() => setOption("overview")}>
                                     <Home className="h-4 w-4" />
                                     <span>Dashboard</span>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                             <SidebarMenuItem>
-                                <SidebarMenuButton tooltip="Courses">
+                                <SidebarMenuButton tooltip="Courses" onClick={() => setOption("courses")}>
                                     <BookOpen className="h-4 w-4" />
                                     <span>Courses</span>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                             <SidebarMenuItem>
-                                <SidebarMenuButton tooltip="Videos">
+                                <SidebarMenuButton tooltip="Videos" onClick={() => setOption("videos")}>
                                     <FileVideo className="h-4 w-4" />
                                     <span>Videos</span>
                                 </SidebarMenuButton>
@@ -147,13 +163,13 @@ const TeacherSidebar = () => {
                     <SidebarGroupContent>
                         <SidebarMenu>
                             <SidebarMenuItem>
-                                <SidebarMenuButton tooltip="Students">
+                                <SidebarMenuButton tooltip="Students" onClick={() => setOption("students")}>
                                     <Users className="h-4 w-4" />
                                     <span>Students</span>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                             <SidebarMenuItem>
-                                <SidebarMenuButton tooltip="Chat">
+                                <SidebarMenuButton tooltip="Chat" onClick={() => setOption("chat")}>
                                     <MessageSquare className="h-4 w-4" />
                                     <span>Chat</span>
                                 </SidebarMenuButton>
@@ -173,9 +189,9 @@ const TeacherSidebar = () => {
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarFooter>
-        </Sidebar>
+        </Sidebar >
     )
-}
+})
 
 const DashboardOverview = () => {
     return (
