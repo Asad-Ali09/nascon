@@ -66,9 +66,15 @@ export const addVideoToCourse = createAsyncThunk(
   "course/addVideo",
   async ({ courseId, videoData }, { rejectWithValue }) => {
     try {
+      // Ensure videoData has the correct structure
+      const formattedVideoData = {
+        ...videoData,
+        url: videoData.url,
+      };
+
       const response = await axiosClient.post(
         `/course/add-video/${courseId}`,
-        videoData
+        formattedVideoData
       );
       if (response.data.success) {
         return response.data.course;
@@ -82,11 +88,72 @@ export const addVideoToCourse = createAsyncThunk(
   }
 );
 
+export const updateVideo = createAsyncThunk(
+  "course/updateVideo",
+  async ({ courseId, videoId, videoData }, { rejectWithValue }) => {
+    try {
+      // Ensure videoData has the correct structure with title and url
+      const formattedVideoData = {
+        title: videoData.title,
+        url: videoData.url
+      };
+
+      const response = await axiosClient.put(
+        `/course/${courseId}/video/${videoId}`,
+        formattedVideoData
+      );
+      
+      if (response.data.success) {
+        return response.data.course;
+      }
+      return rejectWithValue(response.data.message || "Failed to update video");
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to update video"
+      );
+    }
+  }
+);
+
+export const updateVideoOrder = createAsyncThunk(
+  "course/updateVideoOrder",
+  async ({ courseId, videos }, { rejectWithValue }) => {
+    try {
+      // Send the complete video objects in the new order
+      const response = await axiosClient.put(
+        `/course/${courseId}/videos/order`,
+        { videos }
+      );
+      
+      if (response.data.success) {
+        return response.data.course;
+      }
+      return rejectWithValue(response.data.message || "Failed to update video order");
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to update video order"
+      );
+    }
+  }
+);
+
 export const fetchCourses = createAsyncThunk(
   "course/fetchCourses",
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosClient.get("/course/my-courses");
+      console.log("Fetched courses:", response.data.courses);
+      
+      // Log video data for debugging
+      response.data.courses.forEach(course => {
+        if (course.videos && course.videos.length > 0) {
+          console.log(`Course ${course.title} has ${course.videos.length} videos`);
+          course.videos.forEach(video => {
+            console.log(`Video ${video.title} transcript:`, video.transcript ? "Available" : "Not available");
+          });
+        }
+      });
+      
       return response.data.courses;
     } catch (error) {
       return rejectWithValue(
@@ -101,6 +168,16 @@ export const fetchCourseById = createAsyncThunk(
   async (courseId, { rejectWithValue }) => {
     try {
       const response = await axiosClient.get(`/course/${courseId}`);
+      console.log("Fetched course by ID:", response.data.course);
+      
+      // Log video data for debugging
+      if (response.data.course && response.data.course.videos) {
+        console.log(`Course ${response.data.course.title} has ${response.data.course.videos.length} videos`);
+        response.data.course.videos.forEach(video => {
+          console.log(`Video ${video.title} transcript:`, video.transcript ? "Available" : "Not available");
+        });
+      }
+      
       return response.data.course;
     } catch (error) {
       return rejectWithValue(
@@ -155,6 +232,48 @@ const courseSlice = createSlice({
         }
       })
       .addCase(addVideoToCourse.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Update Video
+      .addCase(updateVideo.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateVideo.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.courses.findIndex(
+          (course) => course._id === action.payload._id
+        );
+        if (index !== -1) {
+          state.courses[index] = action.payload;
+        }
+        if (state.currentCourse?._id === action.payload._id) {
+          state.currentCourse = action.payload;
+        }
+      })
+      .addCase(updateVideo.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Update Video Order
+      .addCase(updateVideoOrder.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateVideoOrder.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.courses.findIndex(
+          (course) => course._id === action.payload._id
+        );
+        if (index !== -1) {
+          state.courses[index] = action.payload;
+        }
+        if (state.currentCourse?._id === action.payload._id) {
+          state.currentCourse = action.payload;
+        }
+      })
+      .addCase(updateVideoOrder.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

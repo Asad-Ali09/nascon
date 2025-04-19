@@ -56,7 +56,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress"
 import { toast } from "sonner"
 import { checkAuthStatus, logoutUser } from "@/Redux/slices/authSlice"
-import { createCourse, fetchCourses } from "@/Redux/slices/courseSlice"
+import { createCourse, fetchCourses, addVideoToCourse } from "@/Redux/slices/courseSlice"
+import VideoUpload from "@/components/VideoUpload"
 
 const TeacherDashboard = () => {
     const [activeTab, setActiveTab] = useState("overview")
@@ -451,6 +452,26 @@ const CourseManagement = ({
     handleImageUpload,
     isSubmitting
 }) => {
+    const [selectedCourse, setSelectedCourse] = useState(null);
+    const [isVideoUploadOpen, setIsVideoUploadOpen] = useState(false);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+
+    const handleVideoUpload = async (videoData) => {
+        if (!selectedCourse) return;
+
+        try {
+            await dispatch(addVideoToCourse({
+                courseId: selectedCourse._id,
+                videoData
+            })).unwrap();
+            toast.success('Video added to course successfully');
+            setIsVideoUploadOpen(false);
+        } catch (error) {
+            toast.error(error || 'Failed to add video to course');
+        }
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -561,7 +582,12 @@ const CourseManagement = ({
                                         <Button variant="outline" className="flex-1">
                                             Edit
                                         </Button>
-                                        <Button className="flex-1">Manage</Button>
+                                        <Button
+                                            className="flex-1"
+                                            onClick={() => navigate(`/course/${course._id}`)}
+                                        >
+                                            Manage Course
+                                        </Button>
                                     </CardFooter>
                                 </Card>
                             </motion.div>
@@ -591,6 +617,19 @@ const CourseManagement = ({
                     </motion.div>
                 </div>
             )}
+
+            {/* Video Upload Dialog */}
+            <Dialog open={isVideoUploadOpen} onOpenChange={setIsVideoUploadOpen}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle>Add Video to Course</DialogTitle>
+                        <DialogDescription>
+                            Upload a video for {selectedCourse?.title}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <VideoUpload onVideoUpload={handleVideoUpload} />
+                </DialogContent>
+            </Dialog>
         </motion.div>
     )
 }
