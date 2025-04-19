@@ -189,6 +189,7 @@ const getMyCourses = async (req: Request, res: Response) => {
       createdAt: 1,
       "videos._id": 1,
       "videos.title": 1,
+      "videos.url": 1,
       "videos.order": 1,
       "videos.createdAt": 1,
     }

@@ -1,4 +1,4 @@
-import { Document } from "mongoose";
+import { Document, Types } from "mongoose";
 
 export interface User extends Document {
   _id: string;
@@ -9,3 +9,7 @@ export interface User extends Document {
   createJWT: () => string;
   comparePassword: (candidatePassword: string) => Promise<boolean>;
 }
+
+export type Student = User & {
+  enrolledCourses: Types.ObjectId[];
+};

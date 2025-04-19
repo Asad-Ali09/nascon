@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { User } from "../types";
+import { Student, User } from "../types";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { TokenType } from "../types/authTypes";
@@ -39,7 +39,17 @@ const UserSchema = new Schema<User>(
 
 const TutorSchema = new Schema({});
 
-const StudentSchema = new Schema({});
+const StudentSchema = new Schema<Student>(
+  {
+    enrolledCourses: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Course",
+      },
+    ],
+  },
+  { _id: true }
+);
 
 UserSchema.pre("save", async function (next) {
   if (!this.password || !this.isModified("password")) {
