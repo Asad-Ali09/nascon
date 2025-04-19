@@ -79,20 +79,20 @@ const isLoggedIn = async (req: Request, res: Response) => {
   const { token } = req.cookies;
 
   if (!token || typeof token !== "string") {
-    return res.status(200).json(false);
+    return res.status(200).json({ user: null, isLoggedIn: false });
   }
 
   const decodedToken = (await jwt.verify(token, jwtConfig.secret)) as TokenType;
   if (!decodedToken) {
-    return res.status(200).json(false);
+    return res.status(200).json({ user: null, isLoggedIn: false });
   }
   const user = await UserModel.findById(decodedToken.userID);
-  if (!user) return res.status(200).json(false);
+  if (!user) return res.status(200).json({ user: null, isLoggedIn: false });
   const { password, ...responseUser } = user.toObject();
-  return res.status(200).json(responseUser);
+  return res.status(200).json({ user: responseUser, isLoggedIn: true });
 };
 
-const logout = async (req: Request, res: Response) => {
+const logout = async (_: Request, res: Response) => {
   res.clearCookie("token", cookieOptions());
   res.status(200).json({ message: "Logged Out Successfully" });
 };

@@ -12,5 +12,13 @@ const googleCredentials = {
   username: process.env.GOOGLE_EMAIL_ACCOUNT || "",
   password: process.env.GOOGLE_EMAIL_PASS || "",
 };
+const ASSEMBLYAI_API_KEY = process.env.ASSEMBLYAI_API_KEY || "";
 
-export { port, morganFormat, mongoURI, jwtConfig, googleCredentials };
+export {
+  port,
+  morganFormat,
+  mongoURI,
+  jwtConfig,
+  googleCredentials,
+  ASSEMBLYAI_API_KEY,
+};
