@@ -1,8 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, memo, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
-import { memo } from "react"
 import {
     BarChart3,
     BookOpen,
@@ -15,6 +14,15 @@ import {
     Settings,
     Users,
 } from "lucide-react"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -44,7 +52,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress"
 
 const TeacherDashboard = () => {
@@ -54,7 +62,7 @@ const TeacherDashboard = () => {
 
     return (
         <SidebarProvider>
-            <div className="flex h-screen bg-background w-[100vw]">
+            <div className="flex h-screen bg-background w-[100vw] gap-0 p-0 m-0">
                 <TeacherSidebar isOpen={sidebarOpen} setOption={setOption} />
                 <SidebarInset className="flex-1 overflow-auto">
                     <header className="sticky top-0 z-10 flex min-h-[7vh] items-center gap-4 border-b bg-background px-6">
@@ -62,10 +70,6 @@ const TeacherDashboard = () => {
                         <div className="flex flex-1 items-center justify-between">
                             <h1 className="text-xl font-semibold">Teacher Dashboard</h1>
                             <div className="flex items-center gap-4">
-                                <Button variant="outline" size="sm">
-                                    <Calendar className="mr-2 h-4 w-4" />
-                                    April 19, 2025
-                                </Button>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger className='hover:cursor-pointer'>
                                         <Avatar>
@@ -87,7 +91,7 @@ const TeacherDashboard = () => {
                         </div>
                     </header>
 
-                    <main className="flex-1 p-6">
+                    <main className={`${option === 'chat' ? `flex-1 p-0` : `flex-1 p-6`}`}>
                         {option === "overview" && (
                             <DashboardOverview />
                         )}
@@ -205,26 +209,17 @@ const DashboardOverview = () => {
                 <StatsCard
                     title="Total Students"
                     value="1,248"
-                    description="+12% from last month"
                     icon={<Users className="h-4 w-4 text-muted-foreground" />}
                 />
                 <StatsCard
                     title="Active Courses"
                     value="8"
-                    description="2 pending approval"
                     icon={<BookOpen className="h-4 w-4 text-muted-foreground" />}
                 />
                 <StatsCard
                     title="Video Content"
                     value="64 hrs"
-                    description="12 videos uploaded this week"
                     icon={<FileVideo className="h-4 w-4 text-muted-foreground" />}
-                />
-                <StatsCard
-                    title="Revenue"
-                    value="$8,492"
-                    description="+18% from last month"
-                    icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
                 />
             </div>
 
@@ -236,9 +231,9 @@ const DashboardOverview = () => {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {[1, 2, 3, 4].map((i) => (
+                            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                                 <div key={i} className="flex items-center gap-4">
-                                    <Avatar>
+                                    <Avatar className={'w-10 h-10'}>
                                         <AvatarImage src={`/placeholder.svg?height=40&width=40&text=${i}`} />
                                         <AvatarFallback>S{i}</AvatarFallback>
                                     </Avatar>
@@ -272,6 +267,8 @@ const DashboardOverview = () => {
                                 { name: "Introduction to Chemistry", completion: 76, students: 218 },
                                 { name: "Mathematics 101", completion: 92, students: 156 },
                                 { name: "Biology Fundamentals", completion: 64, students: 124 },
+                                { name: "Biology Mediations", completion: 64, students: 124 },
+                                { name: "Biology Validations", completion: 64, students: 124 },
                             ].map((course, i) => (
                                 <div key={i} className="space-y-2">
                                     <div className="flex items-center justify-between">
@@ -334,10 +331,60 @@ const CourseManagement = () => {
         >
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Your Courses</h2>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create New Course
-                </Button>
+                <Dialog>
+                    <DialogTrigger>
+                        <Button className='cursor-pointer' variant="outline">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create New Course
+                        </Button></DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px]">
+                        <DialogHeader>
+                            <DialogTitle>Create New Course</DialogTitle>
+                            <DialogDescription>
+                                Fill in the details below to create a new course.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <form className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-foreground" htmlFor="title">
+                                    Course Title
+                                </label>
+                                <input
+                                    id="title"
+                                    type="text"
+                                    placeholder="e.g. Introduction to Web Development"
+                                    className="w-full rounded-lg border border-muted bg-background px-3 py-2 text-sm shadow-sm transition focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-foreground">
+                                    Thumbnail Image
+                                </label>
+                                <DropImage />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-foreground" htmlFor="description">
+                                    Description
+                                </label>
+                                <textarea
+                                    id="description"
+                                    rows={4}
+                                    placeholder="Write a short description of your course..."
+                                    className="w-full rounded-lg border border-muted bg-background px-3 py-2 text-sm shadow-sm transition focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                                ></textarea>
+                            </div>
+
+                            <div className="flex justify-end">
+                                <Button type="submit" className="mt-2">
+                                    Submit
+                                </Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -391,6 +438,92 @@ const CourseManagement = () => {
                 </motion.div>
             </div>
         </motion.div>
+    )
+}
+
+const DropImage = () => {
+    const [image, setImage] = useState(null)
+    const [imageUploaded, setImageUploaded] = useState(false)
+    const fileInputRef = useRef(null)
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0]
+        if (!file || !file.type.startsWith("image/")) return
+
+        const reader = new FileReader()
+        reader.onloadend = () => {
+            const base64data = reader.result
+            setImage(base64data)
+            localStorage.setItem("uploadedImage", base64data)
+        }
+        reader.readAsDataURL(file)
+        setImageUploaded(true)
+
+        toast.success("Image uploaded successfully", {
+            action: {
+                text: "Close",
+                onClick: () => toast.dismiss()
+            }
+        })
+    }
+
+    const handleDrop = (e) => {
+        e.preventDefault()
+        const file = e.dataTransfer.files[0]
+        if (!file || !file.type.startsWith("image/")) {
+            toast.error("File type not supported", {
+                action: {
+                    label: "Close",
+                    onClick: () => toast.dismiss()
+                }
+            })
+            return
+        }
+
+        const reader = new FileReader()
+        reader.onloadend = () => {
+            const base64data = reader.result
+            setImage(base64data)
+            localStorage.setItem("uploadedImage", base64data)
+        }
+        reader.readAsDataURL(file)
+        setImageUploaded(true)
+    }
+
+    const handleDragOver = (e) => e.preventDefault()
+
+    const handleDivClick = () => fileInputRef.current.click()
+
+    const removeImage = () => {
+        setImage(null)
+        localStorage.removeItem("uploadedImage")
+    }
+
+    useEffect(() => {
+        removeImage()
+    }, [])
+
+    return (
+        <div
+            onClick={handleDivClick}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            className="relative mt-1.5 flex h-36 w-full cursor-pointer border-dashed items-center justify-center rounded-lg border border-black/36 bg-muted/20 px-4 py-2 text-muted-foreground transition hover:bg-muted/30"
+        >
+            <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            />
+
+            {imageUploaded ? (
+                <img src={image} alt="Preview" className="max-h-full object-contain" />
+            ) : (
+                <span className="text-sm">Drag & drop or click to upload image</span>
+            )}
+        </div>
     )
 }
 
@@ -623,57 +756,6 @@ const StudentManagement = () => {
                     </Button>
                 </CardFooter>
             </Card>
-
-            <div className="grid gap-4 md:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Student Engagement</CardTitle>
-                        <CardDescription>Activity metrics for enrolled students</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            <div className="rounded-lg border p-4">
-                                <h3 className="font-medium">Average Completion Rate</h3>
-                                <div className="mt-2 flex items-center gap-2">
-                                    <Progress value={79} className="h-2 flex-1" />
-                                    <span className="font-bold">79%</span>
-                                </div>
-                            </div>
-
-                            <div className="rounded-lg border p-4">
-                                <h3 className="font-medium">Active Students This Week</h3>
-                                <p className="mt-2 text-2xl font-bold">842</p>
-                                <p className="text-sm text-muted-foreground">+12% from last week</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Student Distribution</CardTitle>
-                        <CardDescription>Students by course enrollment</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {[
-                                { course: "Advanced Physics", students: 342, percentage: 27 },
-                                { course: "Introduction to Chemistry", students: 218, percentage: 17 },
-                                { course: "Mathematics 101", students: 156, percentage: 12 },
-                                { course: "Biology Fundamentals", students: 124, percentage: 10 },
-                            ].map((item, i) => (
-                                <div key={i} className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <p className="font-medium">{item.course}</p>
-                                        <span className="text-sm">{item.students} students</span>
-                                    </div>
-                                    <Progress value={item.percentage} className="h-2" />
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
         </motion.div>
     )
 }
@@ -799,7 +881,7 @@ const ChatInterface = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex h-[calc(100vh-12rem)] overflow-hidden rounded-lg border"
+            className="flex h-[calc(100vh-4.21rem)] overflow-hidden rounded-none border"
         >
             <div className="w-64 border-r">
                 <div className="p-4">
