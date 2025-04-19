@@ -4,6 +4,7 @@ import { useState, memo, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import {
     BarChart3,
+    Book,
     BookOpen,
     Calendar,
     FileVideo,
@@ -209,7 +210,7 @@ const DashboardOverview = () => {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
                     title="Total Students"
-                    value="1,248"
+                    value="1248"
                     icon={<Users className="h-4 w-4 text-muted-foreground" />}
                 />
                 <StatsCard
@@ -218,8 +219,13 @@ const DashboardOverview = () => {
                     icon={<BookOpen className="h-4 w-4 text-muted-foreground" />}
                 />
                 <StatsCard
-                    title="Video Content"
-                    value="64 hrs"
+                    title="Total Courses"
+                    value="132"
+                    icon={<Book className="h-4 w-4 text-muted-foreground" />}
+                />
+                <StatsCard
+                    title="Total Videos"
+                    value="928"
                     icon={<FileVideo className="h-4 w-4 text-muted-foreground" />}
                 />
             </div>
@@ -258,8 +264,8 @@ const DashboardOverview = () => {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Course Performance</CardTitle>
-                        <CardDescription>Engagement metrics for your top courses</CardDescription>
+                        <CardTitle>Course Averages</CardTitle>
+                        <CardDescription>Passing metrics for your recent courses</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
@@ -316,11 +322,6 @@ const StatsCard = ({ title, value, description, icon }) => {
 const CourseManagement = () => {
     const courses = [
         { id: 1, title: "Advanced Physics", students: 342, videos: 24, status: "active" },
-        { id: 2, title: "Introduction to Chemistry", students: 218, videos: 18, status: "active" },
-        { id: 3, title: "Mathematics 101", students: 156, videos: 32, status: "active" },
-        { id: 4, title: "Biology Fundamentals", students: 124, videos: 16, status: "active" },
-        { id: 5, title: "Computer Science Basics", students: 98, videos: 12, status: "draft" },
-        { id: 6, title: "Environmental Science", students: 76, videos: 8, status: "draft" },
     ]
 
     return (
@@ -391,17 +392,21 @@ const CourseManagement = () => {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {courses.map((course) => (
                     <motion.div key={course.id} whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-                        <Card>
-                            <CardHeader className="pb-2">
-                                <div className="flex items-center justify-between">
+
+                        <Card className={'pt-0 pb-6'}>
+                            <CardHeader className="pb-0 px-0">
+                                <img src="https://avatars.githubusercontent.com/u/118683092?v=4" alt="Course Thumbnail" className="h-32 w-full mb-4 rounded-t-lg object-cover" />
+                                <div className="flex items-center justify-between px-6">
                                     <CardTitle>{course.title}</CardTitle>
                                     <Badge variant={course.status === "active" ? "default" : "secondary"}>
                                         {course.status === "active" ? "Active" : "Draft"}
                                     </Badge>
                                 </div>
-                                <CardDescription>{course.students} students enrolled</CardDescription>
+                                <CardDescription className={'px-6'}>{course.students} students enrolled</CardDescription>
                             </CardHeader>
                             <CardContent>
+
+
                                 <div className="flex items-center justify-between text-sm">
                                     <div className="flex items-center">
                                         <FileVideo className="mr-1 h-4 w-4 text-muted-foreground" />
@@ -547,9 +552,7 @@ const DropImage = () => {
 const VideoManagement = () => {
     const videos = [
         { id: 1, title: "Wave-Particle Duality", duration: "38:45", course: "Advanced Physics", status: "transcribed" },
-        { id: 2, title: "Atomic Structure", duration: "45:12", course: "Introduction to Chemistry", status: "uploading" },
-        { id: 3, title: "Chemical Bonding", duration: "36:29", course: "Introduction to Chemistry", status: "processing" },
-        { id: 4, title: "Calculus Fundamentals", duration: "52:07", course: "Mathematics 101", status: "transcribed" },
+        { id: 2, title: "Chemical Bonding", duration: "36:29", course: "Introduction to Chemistry", status: "processing" },
     ]
 
     return (
@@ -599,7 +602,8 @@ const VideoManagement = () => {
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <Badge variant={video.status === "transcribed" ? "default" : "secondary"}>
-                                        {video.status === "transcribed" ? "Transcribed" : "Processing"}
+                                        {video.status === 'transcribed' && "Transcribed"}
+                                        {video.status === 'processing' && "Processing"}
                                     </Badge>
                                     <Button variant="outline" size="sm">
                                         Edit
@@ -636,7 +640,7 @@ const VideoManagement = () => {
                             </div>
                             <Progress value={66.67} className="mt-2 h-2" />
                             <p className="mt-2 text-sm text-muted-foreground">
-                                4 videos have been successfully transcribed. 2 videos are still being processed.
+                                2/4 videos have been successfully transcribed. 2 videos are still being processed.
                             </p>
                         </div>
 
@@ -646,7 +650,7 @@ const VideoManagement = () => {
                                     <div className="h-2 w-2 rounded-full bg-green-500"></div>
                                     <h3 className="font-medium">Completed</h3>
                                 </div>
-                                <p className="mt-2 text-2xl font-bold">4</p>
+                                <p className="mt-2 text-2xl font-bold">2</p>
                                 <p className="text-sm text-muted-foreground">Videos with transcripts</p>
                             </div>
 
