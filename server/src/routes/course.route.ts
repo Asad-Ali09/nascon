@@ -2,6 +2,7 @@ import express from "express";
 import {
   addVideo,
   createCourse,
+  getMyCourses,
   reorderVideos,
   updateCourseMetadata,
   updateVideo,
@@ -37,6 +38,13 @@ router.put(
   authMiddleware,
   roleMiddleware("tutor"),
   reorderVideos
+);
+
+router.get(
+  "/my-courses",
+  authMiddleware,
+  roleMiddleware("tutor"),
+  getMyCourses
 );
 
 export default router;
