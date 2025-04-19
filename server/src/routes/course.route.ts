@@ -2,6 +2,7 @@ import express from "express";
 import {
   addVideo,
   createCourse,
+  getCourse,
   getMyCourses,
   reorderVideos,
   updateCourseMetadata,
@@ -46,5 +47,7 @@ router.get(
   roleMiddleware("tutor"),
   getMyCourses
 );
+
+router.get("/:courseId", authMiddleware, getCourse);
 
 export default router;

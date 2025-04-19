@@ -16,13 +16,8 @@ const EnrollmentSchema = new Schema({
 const MessageSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: "User", required: true },
   text: { type: String, required: true },
-  replies: [
-    {
-      user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-      text: { type: String, required: true },
-      createdAt: { type: Date, default: Date.now },
-    },
-  ],
+  // Reference to the parent message if this is a reply
+  parentMessage: { type: Schema.Types.ObjectId, ref: "Message" },
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -57,3 +52,6 @@ const CourseSchema = new Schema(
 );
 
 export const CourseModel = mongoose.model("Course", CourseSchema);
+export const MessageModel = mongoose.model("Message", MessageSchema);
+export const EnrollmentModel = mongoose.model("Enrollment", EnrollmentSchema);
+export const VideoModel = mongoose.model("Video", VideoSchema);

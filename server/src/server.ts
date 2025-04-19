@@ -10,6 +10,7 @@ import errorHandler from "./middlewares/errorHandler";
 import notFound from "./middlewares/notFound";
 import { User } from "./types";
 import cors from "cors";
+import { setupSockets } from "./socket";
 
 declare module "express-serve-static-core" {
   export interface Request {
@@ -57,7 +58,10 @@ app.use(notFound);
 mongoose
   .connect(mongoURI)
   .then(() => {
-    app.listen(port, () => console.log(`Server is running on port ${port}`));
+    const server = app.listen(port, () =>
+      console.log(`Server is running on port ${port}`)
+    );
+    const io = setupSockets(server);
   })
   .catch((err: any) => {
     logger.error(err);

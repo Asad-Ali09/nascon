@@ -203,6 +203,46 @@ const getMyCourses = async (req: Request, res: Response) => {
   });
 };
 
+const getCourse = async (req: Request, res: Response) => {
+  const { courseId } = req.params;
+
+  const course = await CourseModel.findById(courseId)
+    .populate({
+      path: "tutor",
+      select: "name email", // Customize tutor fields as needed
+    })
+    .populate({
+      path: "enrollments.student",
+      select: "name email", // Basic student info for enrollments
+    })
+    .populate({
+      path: "chatRoom.user",
+      select: "name email", // Message author info
+    })
+    .populate({
+      path: "chatRoom.parentMessage",
+      populate: {
+        path: "user",
+        select: "name email", // Parent message author info
+      },
+    });
+
+  if (!course) {
+    return res.status(404).json({ message: "Course not found" });
+  }
+
+  // Transform the data if needed (e.g., count enrollments)
+  const transformedCourse = {
+    ...course.toObject(),
+    enrollmentCount: course.enrollments.length,
+  };
+
+  res.status(200).json({
+    message: "Course retrieved successfully",
+    data: transformedCourse,
+  });
+};
+
 export {
   addVideo,
   createCourse,
@@ -210,4 +250,5 @@ export {
   updateVideo,
   reorderVideos,
   getMyCourses,
+  getCourse,
 };
