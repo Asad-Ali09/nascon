@@ -12,6 +12,7 @@ import {
     MessageSquare,
     Plus,
     Settings,
+    Trash2,
     Users,
 } from "lucide-react"
 import {
@@ -522,8 +523,20 @@ const DropImage = () => {
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             />
 
-            {imageUploaded && imageName ? (
-                <span className="text-sm">Image Chosen: {imageName}</span>
+            {imageUploaded && image ? (
+                <div className="flex flex-col items-center">
+                    <img
+                        src={image}
+                        alt="Uploaded Preview"
+                        className="h-24 w-24 object-cover rounded-md"
+                    />
+                    <button
+                        onClick={removeImage}
+                        className="mt-2 text-sm text-red-500 hover:underline"
+                    >
+                        Remove
+                    </button>
+                </div>
             ) : (
                 <span className="text-sm">Drag & drop or click to upload image</span>
             )}
@@ -533,24 +546,10 @@ const DropImage = () => {
 
 const VideoManagement = () => {
     const videos = [
-        {
-            id: 1,
-            title: "Introduction to Quantum Mechanics",
-            duration: "42:18",
-            course: "Advanced Physics",
-            status: "transcribed",
-        },
-        { id: 2, title: "Wave-Particle Duality", duration: "38:45", course: "Advanced Physics", status: "transcribed" },
-        { id: 3, title: "Atomic Structure", duration: "45:12", course: "Introduction to Chemistry", status: "transcribed" },
-        { id: 4, title: "Chemical Bonding", duration: "36:29", course: "Introduction to Chemistry", status: "processing" },
-        { id: 5, title: "Calculus Fundamentals", duration: "52:07", course: "Mathematics 101", status: "transcribed" },
-        {
-            id: 6,
-            title: "Cell Structure and Function",
-            duration: "48:33",
-            course: "Biology Fundamentals",
-            status: "processing",
-        },
+        { id: 1, title: "Wave-Particle Duality", duration: "38:45", course: "Advanced Physics", status: "transcribed" },
+        { id: 2, title: "Atomic Structure", duration: "45:12", course: "Introduction to Chemistry", status: "uploading" },
+        { id: 3, title: "Chemical Bonding", duration: "36:29", course: "Introduction to Chemistry", status: "processing" },
+        { id: 4, title: "Calculus Fundamentals", duration: "52:07", course: "Mathematics 101", status: "transcribed" },
     ]
 
     return (
@@ -607,6 +606,9 @@ const VideoManagement = () => {
                                     </Button>
                                     <Button variant="outline" size="sm">
                                         View
+                                    </Button>
+                                    <Button variant="outline">
+                                        <Trash2 className="text-red-400" />
                                     </Button>
                                 </div>
                             </motion.div>
