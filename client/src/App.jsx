@@ -9,6 +9,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
 import CourseManagement from './pages/CourseManagement';
 import VideoPlayer from './pages/VideoPlayer';
+import Home from './pages/LandingPage';
 
 const App = () => {
   return (
@@ -22,7 +23,7 @@ const App = () => {
         <Route path="/teacher" element={<TeacherDashboard />} />
         <Route path="/course/:courseId" element={<CourseManagement />} />
         <Route path="/course/:courseId/video/:videoId" element={<VideoPlayer />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Home/>} />
       </Routes>
       <Toaster position="top-right" />
     </Router>

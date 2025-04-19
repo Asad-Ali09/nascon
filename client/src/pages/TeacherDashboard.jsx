@@ -60,7 +60,6 @@ import { createCourse, fetchCourses, addVideoToCourse } from "@/Redux/slices/cou
 import VideoUpload from "@/components/VideoUpload"
 
 const TeacherDashboard = () => {
-    const [activeTab, setActiveTab] = useState("overview")
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [option, setOption] = useState("overview");
     const [isCreateCourseOpen, setIsCreateCourseOpen] = useState(false);
@@ -199,7 +198,6 @@ const TeacherDashboard = () => {
                                         <DropdownMenuLabel>My Account</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem className='hover:cursor-pointer'>Profile</DropdownMenuItem>
-                                        <DropdownMenuItem className='hover:cursor-pointer'>Billing</DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem className='hover:cursor-pointer' onClick={handleLogout}>Logout</DropdownMenuItem>
                                     </DropdownMenuContent>
