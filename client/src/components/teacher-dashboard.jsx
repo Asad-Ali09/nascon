@@ -561,7 +561,7 @@ const VideoManagement = () => {
         >
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Video Content</h2>
-                <Button>
+                <Button variant="outline">
                     <Plus className="mr-2 h-4 w-4" />
                     Upload New Video
                 </Button>
